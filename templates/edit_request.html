@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Edit Request{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-9">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Edit Request</h3>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" name="title" class="form-control" value="{{ request_doc.title }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="4" required>{{ request_doc.description }}</textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select" required>
+                                {% for item in ['Medical', 'Grocery', 'Transportation', 'Emergency', 'Elderly Support'] %}
+                                    <option value="{{ item }}" {% if request_doc.category == item %}selected{% endif %}>{{ item }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Urgency</label>
+                            <select name="urgency" class="form-select" required>
+                                {% for item in ['Low', 'Medium', 'High', 'Critical'] %}
+                                    <option value="{{ item }}" {% if request_doc.urgency == item %}selected{% endif %}>{{ item }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label">Community</label>
+                            <select name="community" class="form-select">
+                                {% for community in communities %}
+                                <option value="{{ community.name }}" {% if request_doc.community == community.name %}selected{% endif %}>{{ community.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="isEmergency" name="is_emergency" value="1" {% if request_doc.is_emergency %}checked{% endif %}>
+                                <label class="form-check-label" for="isEmergency">Emergency request</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 mb-3">
+                        <label class="form-label">Location</label>
+                        <input type="text" name="location" class="form-control" value="{{ request_doc.location }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Update Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

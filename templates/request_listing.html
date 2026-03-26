@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Requests{% endblock %}
+{% block content %}
+<h2 class="mb-3">{{ page_title }}</h2>
+
+{% if volunteer_view %}
+<div class="card mb-3">
+    <div class="card-body">
+        <form class="row g-2" method="get">
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Community</label>
+                <select name="community" class="form-select">
+                    <option value="">All Communities</option>
+                    {% for item in communities %}
+                    <option value="{{ item.name }}" {% if selected_community == item.name %}selected{% endif %}>{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary me-2" type="submit">Apply Filters</button>
+                <a class="btn btn-outline-secondary" href="{{ url_for('request_routes.browse_requests_page') }}">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        {% if requests %}
+            <div class="request-grid">
+                {% for req in requests %}
+                <article class="request-card">
+                    <div class="request-meta">
+                        <span class="chip chip-primary">{{ req.category }}</span>
+                        <span class="chip chip-warning">{{ req.urgency }}</span>
+                        <span class="chip chip-success">{{ req.status }}</span>
+                    </div>
+                    <h6>{{ req.title }}</h6>
+                    <p class="small text-secondary">{{ req.description }}</p>
+                    <div class="small mb-1"><i class="bi bi-geo-alt"></i> {{ req.location }}</div>
+                    <div class="small mb-2"><i class="bi bi-people"></i> {{ req.community|default('General') }}</div>
+                    {% if volunteer_view and can_accept_tasks %}
+                    <form method="post" action="{{ url_for('request_routes.accept_request_page', request_id=req._id) }}">
+                        <button type="submit" class="btn btn-sm btn-success">Accept Request</button>
+                    </form>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No records available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

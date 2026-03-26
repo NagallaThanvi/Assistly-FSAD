@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Communities{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Communities</h2>
+    <form method="get" class="d-flex gap-2">
+        <input class="form-control" type="search" name="q" value="{{ query }}" placeholder="Search communities">
+        <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </form>
+</div>
+
+<div class="request-grid">
+{% for c in communities %}
+    <div class="request-card">
+        <h5>{{ c.name }}</h5>
+        <p class="small text-secondary mb-2">{{ c.location }}</p>
+        <p class="small">Members: {{ c.members|length if c.members is iterable else c.members }}</p>
+        <form method="post" action="{{ url_for('communities.join', community_id=c._id) }}">
+            <button class="btn btn-sm btn-success" type="submit">Join</button>
+        </form>
+    </div>
+{% else %}
+    <p class="text-secondary">No communities found.</p>
+{% endfor %}
+</div>
+{% endblock %}

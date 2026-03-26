@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Home{% endblock %}
+{% block content %}
+<section class="hero-box mb-4 hero-splash">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <span class="eyebrow">Community-first support</span>
+            <h1 class="display-5 mt-2">Assistly makes asking and offering help simple.</h1>
+            <p class="lead text-secondary">Connect residents, volunteers, and admins in one organized workspace. Create requests, coordinate responses, and track local impact in real time.</p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('auth.signup') }}">Get Started</a>
+                <a class="btn btn-outline-light btn-lg" href="{{ url_for('auth.login') }}">I already have an account</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <h5>What you can do in minutes</h5>
+                    <ul class="mb-0">
+                        <li>Create and track requests with map location</li>
+                        <li>Switch between Resident and Volunteer modes</li>
+                        <li>Join communities and collaborate locally</li>
+                        <li>Admin analytics and management dashboard</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stats-card h-100">
+            <div class="small text-secondary">Fast action</div>
+            <div class="metric">1 place</div>
+            <div class="small text-secondary">for requests, updates, and volunteer actions.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card h-100">
+            <div class="small text-secondary">Role-aware views</div>
+            <div class="metric">3 roles</div>
+            <div class="small text-secondary">resident, volunteer, and admin with tailored workflows.</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card h-100">
+            <div class="small text-secondary">Live awareness</div>
+            <div class="metric">Real-time</div>
+            <div class="small text-secondary">notifications to keep everyone coordinated.</div>
+        </div>
+    </div>
+</section>
+
+<section id="about" class="card mb-4">
+    <div class="card-body">
+        <h3>About Assistly</h3>
+        <p class="mb-0 text-secondary">Assistly is a role-based platform for coordinated community care. Residents can post requests for help, volunteers can accept and complete tasks, and admins can monitor platform-wide activity and communities.</p>
+    </div>
+</section>
+
+<section id="services" class="row g-3">
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Request Management</h5><p class="text-secondary">Create, update, and manage service requests with status tracking.</p></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Volunteer Workflow</h5><p class="text-secondary">Accept eligible requests and mark tasks completed when done.</p></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Community Operations</h5><p class="text-secondary">Browse, join, and manage communities with role-based controls.</p></div></div></div>
+</section>
+{% endblock %}

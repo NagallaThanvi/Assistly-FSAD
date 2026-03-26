@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Home{% endblock %}
+{% block content %}
+<section class="hero-box mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <h1 class="display-6 mb-3">Care Coordination Built for Real Communities</h1>
+            <p class="lead text-secondary">Assistly helps residents request support, volunteers complete meaningful tasks, and community leaders monitor impact with live metrics.</p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                {% if not session.get('user_id') %}
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-lg">Start Helping</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">Login</a>
+                {% else %}
+                    <a href="{{ url_for('request_routes.dashboard') }}" class="btn btn-primary btn-lg">Open Dashboard</a>
+                    <a href="{{ url_for('request_routes.communities_page') }}" class="btn btn-outline-primary btn-lg">Browse Communities</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="app-surface p-3">
+                <h6 class="mb-3">Platform Snapshot</h6>
+                <div class="row g-2">
+                    <div class="col-6"><div class="stats-card"><div class="small text-secondary">Volunteers</div><div class="metric">{{ stats.active_volunteers }}</div></div></div>
+                    <div class="col-6"><div class="stats-card"><div class="small text-secondary">Requests</div><div class="metric">{{ stats.total_requests }}</div></div></div>
+                    <div class="col-6"><div class="stats-card"><div class="small text-secondary">Completed</div><div class="metric">{{ stats.completed_requests }}</div></div></div>
+                    <div class="col-6"><div class="stats-card"><div class="small text-secondary">Members</div><div class="metric">{{ stats.total_users }}</div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-3 mb-4">
+    {% for community in communities %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="chip chip-primary mb-2">Community</div>
+                <h5>{{ community.name }}</h5>
+                <div class="text-secondary">{{ community.location }}</div>
+                <div class="mt-2"><strong>{{ community.members }}</strong> members</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="row g-3">
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Resident Mode</h5><p class="text-secondary">Create emergency or regular requests, track status, and find nearby volunteers.</p></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Volunteer Mode</h5><p class="text-secondary">Filter tasks by category, accept requests, and mark support actions completed.</p></div></div></div>
+    <div class="col-md-4"><div class="card h-100"><div class="card-body"><h5>Operations Visibility</h5><p class="text-secondary">Measure response performance with analytics charts, feed activity, and completion trends.</p></div></div></div>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Resident Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h2 class="mb-0">Resident Dashboard</h2>
+        <div class="text-secondary">Track requests, volunteers, and urgent support from one view.</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('request_routes.create_request_page') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Create Help Request</a>
+        <a href="{{ url_for('request_routes.create_request_page', emergency='1') }}" class="btn btn-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>Emergency</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="stats-card"><div class="small text-secondary">My Requests</div><div class="metric">{{ requests|length }}</div></div></div>
+    <div class="col-md-3"><div class="stats-card"><div class="small text-secondary">In Progress</div><div class="metric">{{ requests|selectattr('status', 'equalto', 'accepted')|list|length }}</div></div></div>
+    <div class="col-md-3"><div class="stats-card"><div class="small text-secondary">Completed</div><div class="metric">{{ requests|selectattr('status', 'equalto', 'completed')|list|length }}</div></div></div>
+    <div class="col-md-3"><div class="stats-card"><div class="small text-secondary">Volunteers</div><div class="metric">{{ volunteers|length }}</div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3">My Help Requests</h5>
+                {% if requests %}
+                    <div class="request-grid">
+                        {% for req in requests %}
+                        <article class="request-card">
+                            <div class="request-meta">
+                                <span class="chip chip-primary">{{ req.category }}</span>
+                                <span class="chip chip-warning">{{ req.urgency }}</span>
+                                <span class="chip chip-success">{{ req.status }}</span>
+                            </div>
+                            <h6>{{ req.title }}</h6>
+                            <p class="small text-secondary mb-2">{{ req.description }}</p>
+                            <div class="small mb-2"><i class="bi bi-geo-alt"></i> {{ req.location }}</div>
+                            <div class="d-flex gap-2">
+                                {% if can_manage_requests and req.status == 'pending' %}
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('request_routes.edit_request_page', request_id=req._id) }}">Edit</a>
+                                <form action="{{ url_for('request_routes.delete_request_page', request_id=req._id) }}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                                {% else %}
+                                <span class="small text-secondary">Locked after acceptance</span>
+                                {% endif %}
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary mb-0">No requests created yet. Use the create button to get help quickly.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="mb-3">Browse Volunteers</h6>
+                {% for volunteer in volunteers %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <div class="fw-semibold">{{ volunteer.name }}</div>
+                        <div class="small text-secondary">Community volunteer</div>
+                    </div>
+                    <span class="chip chip-success">{{ volunteer.rating|default(5.0) }}★</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body activity-list">
+                <h6 class="mb-2">Activity Feed</h6>
+                {% for item in activity_feed %}
+                <div class="activity-item">
+                    <div class="fw-semibold">{{ format_activity(item.action) }}</div>
+                    <div class="small text-secondary">{{ item.timestamp.strftime('%d %b %Y %I:%M %p') if item.timestamp else '' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

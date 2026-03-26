@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Profile{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">Profile</h4>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" type="text" name="name" value="{{ user.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bio</label>
+                        <textarea class="form-control" name="bio" rows="4">{{ user.bio|default('') }}</textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Save Profile</button>
+                </form>
+                <hr>
+                <div class="small text-secondary">Volunteer Rating</div>
+                <div class="h4">{{ user.rating|default(5.0) }}★</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                <h5>Completed Help History</h5>
+                {% if history %}
+                    <div class="request-grid mt-3">
+                        {% for req in history %}
+                        <div class="request-card">
+                            <div class="fw-semibold">{{ req.title }}</div>
+                            <div class="small text-secondary">{{ req.category }} | {{ req.location }}</div>
+                            <span class="chip chip-success mt-2">Completed</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary mb-0">No completed history available yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

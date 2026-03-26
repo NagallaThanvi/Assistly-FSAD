@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card auth-card">
+            <div class="card-body p-4">
+                <h3 class="mb-1">Welcome back</h3>
+                <p class="text-secondary mb-4">Sign in to manage requests, collaborate with volunteers, and track progress.</p>
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" autocomplete="email" placeholder="name@example.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" autocomplete="current-password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+                <div class="small text-secondary mt-3 text-center">New here? <a href="{{ url_for('auth.signup') }}">Create an account</a></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -7,6 +7,14 @@
             <div class="card-body p-4">
                 <h3 class="mb-1">Create your Assistly account</h3>
                 <p class="text-secondary mb-4">Start posting requests, volunteering, and connecting with nearby communities.</p>
+                <a href="{{ url_for('auth.login_google') }}" class="btn btn-outline-light w-100 mb-3">
+                    <i class="bi bi-google me-2"></i>Continue with Google
+                </a>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <hr class="flex-grow-1 my-0">
+                    <span class="small text-secondary">or sign up with email</span>
+                    <hr class="flex-grow-1 my-0">
+                </div>
                 <form method="post">
                     <div class="mb-3">
                         <label class="form-label">Name</label>

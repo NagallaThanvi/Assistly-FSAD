@@ -7,6 +7,15 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "change-this-in-production")
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
     DB_NAME = os.getenv("DB_NAME", "assistly_db")
+    SMTP_HOST = os.getenv("SMTP_HOST", "")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+    SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").strip().lower() in {"1", "true", "yes", "y", "on"}
+    EMAIL_FROM = os.getenv("EMAIL_FROM", "")
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:5000/auth/google/callback")
 
 
 def _to_bool(value: str | None) -> bool:

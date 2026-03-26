@@ -39,6 +39,36 @@ def create_user(db, name: str, email: str, password: str, role: str = "user"):
         "password": hash_password(password),
         "role": role,
         "mode": "resident",
+        "email_verified": True,
+        "auth_provider": "local",
+    }
+    return _users(db).insert_one(user_doc)
+
+
+def create_user_with_hash(db, name: str, email: str, password_hash: str, role: str = "user"):
+    role = role if role in ALLOWED_ROLES else "user"
+    user_doc = {
+        "name": name.strip(),
+        "email": email.strip().lower(),
+        "password": password_hash,
+        "role": role,
+        "mode": "resident",
+        "email_verified": True,
+        "auth_provider": "local",
+    }
+    return _users(db).insert_one(user_doc)
+
+
+def create_google_user(db, name: str, email: str, role: str = "user"):
+    role = role if role in ALLOWED_ROLES else "user"
+    user_doc = {
+        "name": name.strip() or email.split("@")[0],
+        "email": email.strip().lower(),
+        "password": hash_password(email + "-google-oauth"),
+        "role": role,
+        "mode": "resident",
+        "email_verified": True,
+        "auth_provider": "google",
     }
     return _users(db).insert_one(user_doc)
 

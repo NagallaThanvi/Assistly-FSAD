@@ -4,8 +4,8 @@
 <section class="hero-panel mb-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-            <h2 class="mb-1">Communities Directory</h2>
-            <p class="text-secondary mb-0">Find, join, and manage neighborhood communities with clear approval workflows.</p>
+            <h2 class="mb-1">Community Access Center</h2>
+            <p class="text-secondary mb-0">Scoped access, admin approvals, invitations, and member-only communication.</p>
         </div>
         <form method="get" class="d-flex gap-2">
             <input class="form-control" type="search" name="q" value="{{ query }}" placeholder="Search communities">
@@ -13,6 +13,69 @@
         </form>
     </div>
 </section>
+
+{% if my_invites %}
+<section class="card section-card mb-4">
+    <div class="card-body">
+        <h5 class="mb-2">My Pending Invitations</h5>
+        <div class="compact-list">
+            {% for invite in my_invites %}
+            <div class="compact-list-item">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <div class="fw-semibold">{{ invite.community_name }}</div>
+                        <div class="small text-secondary">Invited by {{ invite.admin_name }}</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{{ url_for('communities.accept_invite', invite_id=invite.id) }}">
+                            <button class="btn btn-sm btn-primary" type="submit">Accept</button>
+                        </form>
+                        <form method="post" action="{{ url_for('communities.reject_invite', invite_id=invite.id) }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if not is_maintainer %}
+<section class="card section-card mb-4">
+    <div class="card-body">
+        <div class="panel-head mb-2">
+            <h5 class="mb-0">Request Community Access</h5>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('communities.personal_chat') }}">Open Personal Chat</a>
+        </div>
+        <form method="post" action="{{ url_for('communities.join_by_name') }}" class="row g-2">
+            <div class="col-md-9">
+                <input class="form-control" name="community_name" placeholder="Enter exact community name" required>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" type="submit">Send Request</button>
+            </div>
+        </form>
+        <div class="small text-secondary mt-2">Your request goes to the assigned community admin for approval.</div>
+    </div>
+</section>
+{% endif %}
+
+{% if is_maintainer %}
+<section class="card section-card mb-4">
+    <div class="card-body">
+        <h5 class="mb-2">Maintainer Community Provisioning</h5>
+        <form class="row g-2" method="post" action="{{ url_for('communities.create') }}">
+            <div class="col-md-4"><input class="form-control" name="name" placeholder="Community name" required></div>
+            <div class="col-md-4"><input class="form-control" name="location" placeholder="Location" required></div>
+            <div class="col-md-3"><input class="form-control" name="admin_email" placeholder="Admin email" required></div>
+            <div class="col-md-1"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+        </form>
+        <div class="small text-secondary mt-2">Each community must have exactly one assigned admin.</div>
+    </div>
+</section>
+{% endif %}
 
 <div class="request-grid community-grid">
 {% for c in communities %}
@@ -22,12 +85,14 @@
             <span class="badge text-bg-info">{{ c.member_count }} members</span>
         </div>
         <p class="small text-secondary mb-3">{{ c.location }}</p>
+        <div class="small text-secondary mb-2">Community Admin: <strong>{{ c.admin_name }}</strong></div>
 
         {% if c.is_member %}
         <button class="btn btn-sm btn-outline-success" type="button" disabled>Already a Member</button>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('communities.personal_chat') }}">Personal Chat</a>
         {% elif c.is_pending %}
         <button class="btn btn-sm btn-outline-warning" type="button" disabled>Request Pending</button>
-        {% else %}
+        {% elif is_maintainer %}
         <form method="post" action="{{ url_for('communities.join', community_id=c._id) }}">
             <button class="btn btn-sm btn-success" type="submit">Send Join Request</button>
         </form>
@@ -52,10 +117,29 @@
             <p class="small text-secondary mb-0">No pending join requests.</p>
             {% endfor %}
         </div>
+
+        <div class="mt-3 pt-3 border-top">
+            <p class="small fw-semibold mb-2">Invite User by Email</p>
+            <form method="post" action="{{ url_for('communities.invite_user', community_id=c._id) }}" class="d-flex gap-2">
+                <input class="form-control form-control-sm" type="email" name="email" placeholder="user email" required>
+                <button class="btn btn-sm btn-outline-primary" type="submit">Invite</button>
+            </form>
+            {% if c.pending_invites %}
+            <div class="small text-secondary mt-2">Pending Invites: {{ c.pending_invites|length }}</div>
+            {% endif %}
+        </div>
+
+        {% if is_maintainer %}
+        <div class="mt-3">
+            <form method="post" action="{{ url_for('communities.delete', community_id=c._id) }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete Community</button>
+            </form>
+        </div>
+        {% endif %}
         {% endif %}
     </article>
 {% else %}
-    <div class="empty-state">No communities found. Try a different search keyword.</div>
+    <div class="empty-state">No communities found in your current access scope.</div>
 {% endfor %}
 </div>
 {% endblock %}

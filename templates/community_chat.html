@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% block title %}Assistly | Community Chat{% endblock %}
+{% block content %}
+<div class="page-shell">
+<section class="hero-panel">
+    <h2 class="mb-1">Personal Community Chat</h2>
+    <p class="text-secondary mb-0">Direct chat is allowed only between members who share a community.</p>
+</section>
+
+<section class="row g-3">
+    <div class="col-lg-4">
+        <div class="card section-card h-100">
+            <div class="card-body">
+                <h5 class="mb-2">People In Your Communities</h5>
+                <div class="compact-list">
+                    {% for member in members %}
+                    <div class="compact-list-item">
+                        <div class="fw-semibold">{{ member.name }}</div>
+                        <div class="small text-secondary mb-2">Shared: {{ member.shared_communities|length }} communities</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for c in member.shared_communities %}
+                            <a class="btn btn-sm {% if selected_user_id == member.id and selected_community_id == c.id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('communities.personal_chat', user_id=member.id, community_id=c.id) }}">
+                                {{ c.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary mb-0">No shared-community members available yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card section-card h-100">
+            <div class="card-body d-flex flex-column gap-3">
+                {% if selected_user_id and selected_community_id and active_community %}
+                <div>
+                    <h5 class="mb-1">Chat with {{ name_map.get(selected_user_id, 'Member') }}</h5>
+                    <div class="small text-secondary">Community: {{ active_community.name }}</div>
+                    <div class="small mt-1">
+                        <span id="chatPresence" class="chip chip-warning">Offline</span>
+                        <span id="chatTyping" class="small text-secondary ms-2" style="display:none;">typing...</span>
+                    </div>
+                </div>
+
+                <div id="chatThread"
+                    class="compact-list"
+                    style="max-height: 360px; overflow: auto;"
+                    data-community-id="{{ selected_community_id }}"
+                    data-target-user-id="{{ selected_user_id }}"
+                    data-current-user-id="{{ current_user.id }}"
+                    data-target-user-name="{{ name_map.get(selected_user_id, 'Member') }}">
+                    {% for msg in messages %}
+                    <div class="compact-list-item {% if msg.sender_id == current_user.id %}border border-primary{% endif %}">
+                        <div class="small text-secondary mb-1">{{ 'You' if msg.sender_id == current_user.id else name_map.get(msg.sender_id, 'Member') }}</div>
+                        <div>{{ msg.body }}</div>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary mb-0">No messages yet. Start the conversation.</p>
+                    {% endfor %}
+                </div>
+
+                <form id="chatSendForm" method="post" action="{{ url_for('communities.personal_chat') }}" class="mt-auto">
+                    <input type="hidden" name="target_user_id" value="{{ selected_user_id }}">
+                    <input type="hidden" name="community_id" value="{{ selected_community_id }}">
+                    <div class="input-group">
+                        <input id="chatMessageInput" class="form-control" name="message" placeholder="Type your message" required>
+                        <button id="chatSendBtn" class="btn btn-primary" type="submit">Send</button>
+                    </div>
+                </form>
+                {% else %}
+                <div class="empty-state">Select a person and one shared community from the left panel to start chat.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const thread = document.getElementById("chatThread");
+    const form = document.getElementById("chatSendForm");
+    const input = document.getElementById("chatMessageInput");
+    const sendBtn = document.getElementById("chatSendBtn");
+    if (!thread || !form || !input || !sendBtn) return;
+
+    const communityId = thread.getAttribute("data-community-id") || "";
+    const targetUserId = thread.getAttribute("data-target-user-id") || "";
+    const currentUserId = thread.getAttribute("data-current-user-id") || "";
+    const targetUserName = thread.getAttribute("data-target-user-name") || "Member";
+    const presenceEl = document.getElementById("chatPresence");
+    const typingEl = document.getElementById("chatTyping");
+    if (!communityId || !targetUserId || !currentUserId) return;
+
+    let lastMessageId = null;
+    const socket = window.io ? window.io() : null;
+    let typingTimer = null;
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function formatTime(isoValue) {
+        if (!isoValue) return "";
+        const date = new Date(isoValue);
+        if (Number.isNaN(date.getTime())) return "";
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function renderMessages(messages) {
+        if (!Array.isArray(messages)) return;
+        const newestId = messages.length ? messages[messages.length - 1].id : null;
+        if (newestId && newestId === lastMessageId) return;
+
+        if (messages.length === 0) {
+            thread.innerHTML = '<p class="text-secondary mb-0">No messages yet. Start the conversation.</p>';
+            lastMessageId = null;
+            return;
+        }
+
+        const html = messages.map((msg) => {
+            const mine = String(msg.sender_id || "") === currentUserId;
+            const label = mine ? "You" : targetUserName;
+            const safeBody = escapeHtml(msg.body || "");
+            const readBy = Array.isArray(msg.read_by) ? msg.read_by.map(String) : [];
+            const receipt = mine ? (readBy.includes(targetUserId) ? "Seen" : "Sent") : formatTime(msg.created_at);
+            return `
+                <div class="compact-list-item ${mine ? "border border-primary" : ""}">
+                    <div class="small text-secondary mb-1">${label}</div>
+                    <div>${safeBody}</div>
+                    <div class="small text-secondary mt-1">${receipt}</div>
+                </div>
+            `;
+        }).join("");
+
+        thread.innerHTML = html;
+        lastMessageId = newestId;
+        thread.scrollTop = thread.scrollHeight;
+
+        const lastMessage = messages.length ? messages[messages.length - 1] : null;
+        if (lastMessage && String(lastMessage.sender_id || "") === targetUserId && socket && socket.connected) {
+            socket.emit("mark_read", {
+                target_user_id: targetUserId,
+                community_id: communityId,
+            });
+        }
+    }
+
+    async function fallbackLoadMessages() {
+        try {
+            const params = new URLSearchParams({ user_id: targetUserId, community_id: communityId });
+            const response = await fetch(`/communities/chat/messages?${params.toString()}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!data.success) return;
+            renderMessages(data.messages || []);
+        } catch (err) {
+            // keep fallback non-blocking
+        }
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = input.value.trim();
+        if (!message) return;
+
+        sendBtn.disabled = true;
+        try {
+            if (socket && socket.connected) {
+                socket.emit("send_chat_message", {
+                    target_user_id: targetUserId,
+                    community_id: communityId,
+                    message,
+                });
+                socket.emit("typing", {
+                    target_user_id: targetUserId,
+                    community_id: communityId,
+                    is_typing: false,
+                });
+                input.value = "";
+            } else {
+                const response = await fetch("/communities/chat/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        target_user_id: targetUserId,
+                        community_id: communityId,
+                        message,
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    sendBtn.disabled = false;
+                    return;
+                }
+                input.value = "";
+                renderMessages(data.messages || []);
+            }
+        } catch (err) {
+            // ignore transient failures
+        } finally {
+            sendBtn.disabled = false;
+        }
+    });
+
+    if (socket) {
+        socket.on("connect", () => {
+            socket.emit("join_chat", {
+                target_user_id: targetUserId,
+                community_id: communityId,
+            });
+        });
+
+        socket.on("chat_snapshot", (payload) => {
+            if (!payload) return;
+            if (String(payload.community_id || "") !== communityId) return;
+            if (String(payload.target_user_id || "") !== targetUserId) return;
+            renderMessages(payload.messages || []);
+        });
+
+        socket.on("chat_error", () => {
+            // keep non-blocking
+        });
+
+        socket.on("chat_presence", (payload) => {
+            if (!payload || String(payload.user_id || "") !== targetUserId || !presenceEl) return;
+            const online = Boolean(payload.is_online);
+            presenceEl.textContent = online ? "Online" : "Offline";
+            presenceEl.className = `chip ${online ? "chip-success" : "chip-warning"}`;
+        });
+
+        socket.on("chat_typing", (payload) => {
+            if (!typingEl || !payload) return;
+            if (String(payload.user_id || "") !== targetUserId) return;
+            const isTyping = Boolean(payload.is_typing);
+            typingEl.style.display = isTyping ? "inline" : "none";
+        });
+    }
+
+    input.addEventListener("input", () => {
+        if (!socket || !socket.connected) return;
+        socket.emit("typing", {
+            target_user_id: targetUserId,
+            community_id: communityId,
+            is_typing: true,
+        });
+
+        if (typingTimer) {
+            clearTimeout(typingTimer);
+        }
+        typingTimer = setTimeout(() => {
+            socket.emit("typing", {
+                target_user_id: targetUserId,
+                community_id: communityId,
+                is_typing: false,
+            });
+        }, 1200);
+    });
+
+    fallbackLoadMessages();
+});
+</script>
+{% endblock %}

@@ -4,14 +4,14 @@
 <div class="page-shell">
 <section class="hero-panel">
     <h2 class="mb-1">Notifications</h2>
-    <p class="text-secondary mb-0">Track important updates, approvals, and task changes in one timeline.</p>
+    <p class="text-secondary mb-0">Track important updates, request status changes, and assigned task events in one timeline.</p>
 </section>
 <div class="card section-card">
     <div class="card-body activity-list">
         {% if feed %}
             {% for item in feed %}
             <div class="activity-item">
-                <div class="fw-semibold">{{ format_activity(item.action) }}</div>
+                <div class="fw-semibold">{{ item.action }}</div>
                 <div class="small text-secondary">{{ item.timestamp.strftime('%d %b %Y %I:%M %p') if item.timestamp else '' }}</div>
             </div>
             {% endfor %}

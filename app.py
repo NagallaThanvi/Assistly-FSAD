@@ -4,15 +4,20 @@ from flask import Flask
 from dotenv import load_dotenv
 from flask_login import LoginManager
 from authlib.integrations.flask_client import OAuth
+from flask_socketio import SocketIO
 
 load_dotenv()
 
 from config import Config, get_db
 from routes.auth_routes import auth_bp
 from routes.dashboard_routes import dashboard_bp
-from routes.requests_routes import requests_bp
 from routes.communities_routes import communities_bp
+from routes.communities_routes import register_chat_socket_handlers
+from routes.requests_routes import requests_bp
 from models.user_model import get_user_object_by_id
+
+
+socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
 
 
 def create_app():
@@ -49,6 +54,9 @@ def create_app():
     app.register_blueprint(requests_bp)
     app.register_blueprint(communities_bp)
 
+    socketio.init_app(app)
+    register_chat_socket_handlers(socketio)
+
     os.makedirs("static/generated", exist_ok=True)
 
     return app
@@ -56,4 +64,4 @@ def create_app():
 
 if __name__ == "__main__":
     flask_app = create_app()
-    flask_app.run(debug=True)
+    socketio.run(flask_app, debug=True)

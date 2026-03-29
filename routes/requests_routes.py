@@ -24,6 +24,10 @@ ALLOWED_STATUSES = {"Open", "In Progress", "Completed"}
 @login_required
 def create_request_page():
     """Display the create request form with user's joined communities."""
+    if current_user.role != "admin" and current_user.doc.get("mode", "resident") != "resident":
+        flash("Switch to Resident Mode to create a request.", "warning")
+        return redirect(url_for("dashboard.user_dashboard"))
+
     user_communities = get_user_communities(current_app.db, current_user.id)
     
     if not user_communities:
@@ -68,6 +72,10 @@ def _validate_payload(form_or_json: dict):
 @requests_bp.route("/create", methods=["POST"])
 @login_required
 def create_request_route():
+    if current_user.role != "admin" and current_user.doc.get("mode", "resident") != "resident":
+        flash("Only Resident Mode can create requests.", "danger")
+        return redirect(url_for("dashboard.user_dashboard"))
+
     community_id = request.form.get("community_id", "").strip()
     
     # Validate community_id

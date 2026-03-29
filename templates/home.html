@@ -5,8 +5,8 @@
 <section class="hero-box mb-4 hero-splash">
     <div class="row align-items-center g-4">
         <div class="col-lg-7">
-            <h1 class="display-6 mb-3">Care Coordination Built for Real Communities</h1>
-            <p class="lead text-secondary">Assistly helps residents request support, volunteers complete meaningful tasks, and community leaders monitor impact with live metrics.</p>
+            <h1 class="display-6 mb-3">Operational Community Support, Built for Scale</h1>
+            <p class="lead text-secondary">Assistly helps residents request support, volunteers complete meaningful tasks, and community leaders monitor service quality through a governed workflow.</p>
             <div class="d-flex flex-wrap gap-2 mt-3">
                 {% if not session.get('user_id') %}
                     <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-lg">Start Helping</a>
@@ -47,9 +47,9 @@
 </section>
 
 <section class="row g-3">
-    <div class="col-md-4"><div class="card section-card h-100"><div class="card-body"><h5>Resident Mode</h5><p class="text-secondary">Create emergency or regular requests, track status, and find nearby volunteers.</p></div></div></div>
-    <div class="col-md-4"><div class="card section-card h-100"><div class="card-body"><h5>Volunteer Mode</h5><p class="text-secondary">Filter tasks by category, accept requests, and mark support actions completed.</p></div></div></div>
-    <div class="col-md-4"><div class="card section-card h-100"><div class="card-body"><h5>Operations Visibility</h5><p class="text-secondary">Measure response performance with analytics charts, feed activity, and completion trends.</p></div></div></div>
+    <div class="col-md-4"><div class="card section-card h-100"><div class="card-body"><h5>Resident Workbench</h5><p class="text-secondary">Create emergency or regular requests with structured status and ownership tracking.</p></div></div></div>
+    <div class="col-md-4"><div class="card section-card h-100"><div class="card-body"><h5>Volunteer Queue</h5><p class="text-secondary">Accept relevant tasks and complete them through transparent execution steps.</p></div></div></div>
+    <div class="col-md-4"><div class="card section-card h-100"><div class="card-body"><h5>Administrative Oversight</h5><p class="text-secondary">Review communities, admin requests, user activity, and operational trends.</p></div></div></div>
 </section>
 </div>
 {% endblock %}

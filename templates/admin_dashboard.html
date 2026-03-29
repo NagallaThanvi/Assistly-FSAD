@@ -22,10 +22,12 @@
                         <h5 class="mb-0">Community Governance</h5>
                     </div>
                     <form class="row g-2 mb-3" method="post" action="{{ url_for('communities.create') }}">
-                        <div class="col-md-5"><input class="form-control" name="name" placeholder="Community name" required></div>
-                        <div class="col-md-5"><input class="form-control" name="location" placeholder="Location" required></div>
+                        <div class="col-md-4"><input class="form-control" name="name" placeholder="Community name" required></div>
+                        <div class="col-md-3"><input class="form-control" name="location" placeholder="Location" required></div>
+                        <div class="col-md-3"><input class="form-control" name="admin_email" placeholder="Assigned admin email" required></div>
                         <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add</button></div>
                     </form>
+                    <div class="small text-secondary mb-3">Only maintainer can create communities. Each community must be assigned to one admin.</div>
                     <div class="compact-list">
                         {% for c in communities %}
                         <div class="compact-list-item">
@@ -43,9 +45,11 @@
                                     {% if can_manage_admin_requests %}
                                     <a class="btn btn-sm btn-outline-primary" href="{{ url_for('dashboard.community_detail', community_id=c._id) }}">View Activity</a>
                                     {% endif %}
+                                    {% if can_manage_admin_requests %}
                                     <form method="post" action="{{ url_for('communities.delete', community_id=c._id) }}">
                                         <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </div>
 

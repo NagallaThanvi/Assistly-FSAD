@@ -3,32 +3,126 @@
 {% block content %}
 <div class="page-shell">
 <section class="hero-panel">
-    <h2 class="mb-1">Profile & Reputation</h2>
-    <p class="text-secondary mb-0">Manage your personal details and review completed contribution history.</p>
+    <h2 class="mb-1">Profile & Account Details</h2>
+    <p class="text-secondary mb-0">Your complete account summary, contribution stats, and personal information in one place.</p>
 </section>
-<div class="row g-3">
-    <div class="col-lg-5">
-        <div class="card section-card">
+<div class="row g-3 profile-grid">
+    <div class="col-xl-4">
+        <div class="card section-card h-100">
             <div class="card-body">
-                <h4 class="mb-3">Profile</h4>
-                <form method="post">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input class="form-control" type="text" name="name" value="{{ user.name }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Bio</label>
-                        <textarea class="form-control" name="bio" rows="4">{{ user.bio|default('') }}</textarea>
-                    </div>
-                    <button class="btn btn-primary" type="submit">Save Profile</button>
-                </form>
+                <div class="profile-avatar">{{ (user.name or 'U')[:1]|upper }}</div>
+                <h4 class="mb-1 mt-3">{{ user.name }}</h4>
+                <div class="small text-secondary">{{ user.email }}</div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <span class="chip chip-primary">Role: {{ user.role|capitalize }}</span>
+                    <span class="chip chip-success">Mode: {{ user.mode|default('resident')|capitalize }}</span>
+                    {% if user.email_verified %}
+                    <span class="chip chip-success">Verified Email</span>
+                    {% else %}
+                    <span class="chip chip-warning">Email Not Verified</span>
+                    {% endif %}
+                </div>
                 <hr>
-                <div class="small text-secondary">Volunteer Rating</div>
-                <div class="h4">{{ user.rating|default(5.0) }}★</div>
+                <div class="small text-secondary mb-1">Auth Provider</div>
+                <div class="fw-semibold mb-2">{{ user.auth_provider|default('local')|capitalize }}</div>
+                <div class="small text-secondary mb-1">Volunteer Rating</div>
+                <div class="h4 mb-0">{{ user.rating|default(5.0) }}★</div>
             </div>
         </div>
     </div>
-    <div class="col-lg-7">
+
+    <div class="col-xl-8">
+        <div class="row g-3 mb-3">
+            <div class="col-sm-6 col-lg-3"><div class="kpi-card"><div class="kpi-label">Communities</div><div class="kpi-value">{{ stats.communities }}</div></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="kpi-card"><div class="kpi-label">Requests Created</div><div class="kpi-value">{{ stats.requests_created }}</div></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="kpi-card"><div class="kpi-label">Tasks Accepted</div><div class="kpi-value">{{ stats.tasks_accepted }}</div></div></div>
+            <div class="col-sm-6 col-lg-3"><div class="kpi-card"><div class="kpi-label">Completed</div><div class="kpi-value">{{ stats.completed }}</div></div></div>
+        </div>
+
+        <div class="card section-card mb-3">
+            <div class="card-body">
+                <div class="panel-head mb-2">
+                    <h5 class="mb-0">Account Summary</h5>
+                    <span class="small text-secondary">Priority identity and access details</span>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="compact-list-item">
+                            <div class="small text-secondary">Role</div>
+                            <div class="fw-semibold">{{ user.role|capitalize }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="compact-list-item">
+                            <div class="small text-secondary">Current Mode</div>
+                            <div class="fw-semibold">{{ user.mode|default('resident')|capitalize }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="compact-list-item">
+                            <div class="small text-secondary">Email Verification</div>
+                            <div class="fw-semibold">{{ 'Verified' if user.email_verified else 'Not Verified' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="compact-list-item">
+                            <div class="small text-secondary">Authentication</div>
+                            <div class="fw-semibold">{{ user.auth_provider|default('local')|capitalize }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card section-card mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">Personal Information</h5>
+                <form method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name</label>
+                            <input class="form-control" type="text" name="name" value="{{ user.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email Address</label>
+                            <input class="form-control" type="email" value="{{ user.email }}" disabled>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Bio</label>
+                            <textarea class="form-control" name="bio" rows="3" placeholder="Tell your community about yourself">{{ user.bio|default('') }}</textarea>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-3" type="submit">Save Profile</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card section-card mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">Location & Communities</h5>
+                <div class="small text-secondary mb-2">Saved Coordinates</div>
+                <div class="mb-3">
+                    {% if location.lat and location.lng %}
+                    <span class="chip chip-primary">Lat: {{ location.lat }}</span>
+                    <span class="chip chip-primary">Lng: {{ location.lng }}</span>
+                    {% else %}
+                    <span class="text-secondary">No location saved yet. Use the dashboard map to save your current position.</span>
+                    {% endif %}
+                </div>
+                <div class="small text-secondary mb-2">Joined Communities</div>
+                <div class="compact-list">
+                    {% for community in communities %}
+                    <div class="compact-list-item">
+                        <div class="fw-semibold">{{ community.name }}</div>
+                        <div class="small text-secondary">{{ community.location }}</div>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary mb-0">You have not joined any communities yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
         <div class="card section-card">
             <div class="card-body">
                 <h5>Completed Help History</h5>
@@ -37,7 +131,7 @@
                         {% for req in history %}
                         <div class="request-card">
                             <div class="fw-semibold">{{ req.title }}</div>
-                            <div class="small text-secondary">{{ req.category }} | {{ req.location }}</div>
+                            <div class="small text-secondary">{{ req.category }}{% if req.location and req.location.text %} | {{ req.location.text }}{% endif %}</div>
                             <span class="chip chip-success mt-2">Completed</span>
                         </div>
                         {% endfor %}

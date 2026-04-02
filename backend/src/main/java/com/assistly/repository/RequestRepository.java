@@ -12,4 +12,8 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findByAuthor(User author);
     List<Request> findByVolunteer(User volunteer);
     List<Request> findByAuthorNot(User user);
+    Long countByAuthor(User author);
+    Long countByVolunteerAndStatus(User volunteer, com.assistly.model.RequestStatus status);
+    List<Request> findByCommunity(com.assistly.model.Community community);
+    List<Request> findByCommunityId(Long communityId);
 }

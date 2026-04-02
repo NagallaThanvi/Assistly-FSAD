@@ -9,7 +9,6 @@ import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import Signup from './components/Signup';
 
-
 const Home = () => (
   <div className="container mt-5 pt-5 text-center">
     <div className="glass-card mx-auto" style={{maxWidth: '800px', marginTop: '10vh'}}>
@@ -31,14 +30,39 @@ const Home = () => (
 
 
 function App() {
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+       try { setUser(JSON.parse(storedUser)); } catch (e) {}
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/login';
+  };
+
   return (
     <Router>
       <nav className="navbar navbar-expand-lg navbar-dark nav-glass fixed-top">
         <div className="container">
           <Link className="navbar-brand fw-bold text-gradient" to="/">Assistly</Link>
-          <div className="navbar-nav ms-auto gap-3">
-            <Link className="nav-link" to="/login">Login</Link>
-            <Link className="nav-link" to="/signup">Signup</Link>
+          <div className="navbar-nav ms-auto gap-3 align-items-center">
+            {user ? (
+                <>
+                  <span className="text-light small opacity-75 fst-italic me-2">Welcome, {user.name}</span>
+                  <Link className="nav-link" to={user.role === 'ROLE_ADMIN' || user.role === 'ADMIN' ? '/dashboard/admin' : '/dashboard/user'}>Dashboard</Link>
+                  <button onClick={handleLogout} className="btn nav-link text-warning fw-bold border-0 bg-transparent">Logout</button>
+                </>
+            ) : (
+                <>
+                  <Link className="nav-link" to="/login">Login</Link>
+                  <Link className="nav-link" to="/signup">Signup</Link>
+                </>
+            )}
           </div>
         </div>
       </nav>
@@ -50,6 +74,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/admin-signup" element={<Signup />} />
         <Route path="/dashboard/user" element={<UserDashboard />} />
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
       </Routes>

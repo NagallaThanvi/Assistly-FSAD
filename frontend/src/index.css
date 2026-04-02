@@ -132,3 +132,21 @@ a.nav-link:hover {
 .tracking-wide {
   letter-spacing: 0.05em;
 }
+
+/* Visibility Enhancements */
+.text-muted {
+  color: #a8b2d1 !important;
+}
+
+.text-light {
+  color: #f8fafc !important;
+}
+
+.form-control.bg-dark {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  color: #f8fafc !important;
+}
+.form-control::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
+}

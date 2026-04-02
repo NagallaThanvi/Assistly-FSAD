@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -12,17 +12,48 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const RequestMap = ({ requests, currentUserId, onAccept }) => {
-  // Default center point (e.g., center of a city)
-  const defaultCenter = [40.7128, -74.0060];
+// Helper component to dynamically re-center map
+const MapUpdater = ({ center }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.flyTo(center, 13);
+    }
+  }, [center, map]);
+  return null;
+};
+
+// Interactive Map Click Handler
+const LocationSelector = ({ onLocationSelect }) => {
+  useMapEvents({
+    click(e) {
+      if (onLocationSelect) onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+};
+
+const RequestMap = ({ requests, currentUserId, onAccept, onLocationSelect, selectedLocation }) => {
+  const defaultCenter = selectedLocation ? [selectedLocation.lat, selectedLocation.lng] : [40.7128, -74.0060];
 
   return (
     <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
       <MapContainer center={defaultCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <MapUpdater center={defaultCenter} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
+        
+        {/* Render Location Picker if active */}
+        {onLocationSelect && <LocationSelector onLocationSelect={onLocationSelect} />}
+        {selectedLocation && (
+          <Marker position={[selectedLocation.lat, selectedLocation.lng]}>
+             <Popup>Target Location</Popup>
+          </Marker>
+        )}
+
+        {/* Existing Requests */}
         {requests && requests.map(req => (
           req.latitude && req.longitude ? (
             <Marker key={req.id} position={[req.latitude, req.longitude]}>

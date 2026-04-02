@@ -26,20 +26,45 @@ public class RequestController {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    com.assistly.repository.CommunityRepository communityRepository;
+
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllRequests() {
         return ResponseEntity.ok(requestRepository.findAll());
     }
 
-    @PostMapping
-    public ResponseEntity<?> createRequest(@RequestBody Request requestBody) {
+    @GetMapping("/community/{communityId}")
+    public ResponseEntity<?> getCommunityRequests(@PathVariable Long communityId) {
         User currentUser = getCurrentUser();
-        if (currentUser == null) return ResponseEntity.status(401).build();
+        Optional<com.assistly.model.Community> commData = communityRepository.findById(communityId);
+        
+        if (currentUser != null && commData.isPresent()) {
+            com.assistly.model.Community comm = commData.get();
+            if (comm.getMembers().contains(currentUser) || (comm.getAdmin() != null && comm.getAdmin().getId().equals(currentUser.getId()))) {
+                return ResponseEntity.ok(requestRepository.findByCommunity(comm));
+            }
+        }
+        return ResponseEntity.status(403).build();
+    }
 
-        requestBody.setAuthor(currentUser);
-        requestBody.setStatus(RequestStatus.OPEN);
-        Request savedRequest = requestRepository.save(requestBody);
-        return ResponseEntity.ok(savedRequest);
+    @PostMapping("/community/{communityId}")
+    public ResponseEntity<?> createRequest(@PathVariable Long communityId, @RequestBody Request requestBody) {
+        User currentUser = getCurrentUser();
+        Optional<com.assistly.model.Community> commData = communityRepository.findById(communityId);
+
+        if (currentUser != null && commData.isPresent()) {
+            com.assistly.model.Community comm = commData.get();
+            if (comm.getMembers().contains(currentUser) || (comm.getAdmin() != null && comm.getAdmin().getId().equals(currentUser.getId()))) {
+                requestBody.setAuthor(currentUser);
+                requestBody.setStatus(RequestStatus.OPEN);
+                requestBody.setCommunity(comm);
+                Request savedRequest = requestRepository.save(requestBody);
+                return ResponseEntity.ok(savedRequest);
+            }
+        }
+        return ResponseEntity.status(403).build();
     }
 
     @PutMapping("/{id}")
@@ -85,14 +110,61 @@ public class RequestController {
         return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/{id}/complete")
-    public ResponseEntity<?> completeRequest(@PathVariable Long id) {
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<?> submitForVerification(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
         Optional<Request> reqData = requestRepository.findById(id);
 
-        if (reqData.isPresent()) {
+        if (reqData.isPresent() && currentUser != null) {
             Request _request = reqData.get();
-            _request.setStatus(RequestStatus.COMPLETED);
-            return ResponseEntity.ok(requestRepository.save(_request));
+            boolean isAssignedVolunteer = _request.getVolunteer() != null && _request.getVolunteer().getId().equals(currentUser.getId());
+            
+            if (isAssignedVolunteer && _request.getStatus() == RequestStatus.IN_PROGRESS) {
+                _request.setStatus(RequestStatus.PENDING_VERIFICATION);
+                return ResponseEntity.ok(requestRepository.save(_request));
+            } else {
+                return ResponseEntity.status(403).body("Only the active volunteer can submit this task for review.");
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> completeRequest(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
+        Optional<Request> reqData = requestRepository.findById(id);
+
+        if (reqData.isPresent() && currentUser != null) {
+            Request _request = reqData.get();
+            boolean isAuthor = _request.getAuthor().getId().equals(currentUser.getId());
+            boolean isAdmin = "ADMIN".equals(currentUser.getRole().name());
+            
+            if ((isAuthor || isAdmin) && _request.getStatus() == RequestStatus.PENDING_VERIFICATION) {
+                _request.setStatus(RequestStatus.COMPLETED);
+                return ResponseEntity.ok(requestRepository.save(_request));
+            } else {
+                return ResponseEntity.status(403).body("Only the resident can officially verify and complete this task.");
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<?> rejectSubmission(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
+        Optional<Request> reqData = requestRepository.findById(id);
+
+        if (reqData.isPresent() && currentUser != null) {
+            Request _request = reqData.get();
+            boolean isAuthor = _request.getAuthor().getId().equals(currentUser.getId());
+            boolean isAdmin = "ADMIN".equals(currentUser.getRole().name());
+            
+            if ((isAuthor || isAdmin) && _request.getStatus() == RequestStatus.PENDING_VERIFICATION) {
+                _request.setStatus(RequestStatus.IN_PROGRESS);
+                return ResponseEntity.ok(requestRepository.save(_request));
+            } else {
+                return ResponseEntity.status(403).body("Only the resident can reject this verification.");
+            }
         }
         return ResponseEntity.notFound().build();
     }

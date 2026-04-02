@@ -27,6 +27,20 @@ public class Community {
     )
     private Set<User> members = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "community_pending_members",
+        joinColumns = @JoinColumn(name = "community_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> pendingMembers = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "admin_id")
+    private User admin;
+
+    private boolean isPrivate = true;
+
     public Community() {}
 
     public Long getId() { return id; }
@@ -37,6 +51,12 @@ public class Community {
     public void setDescription(String description) { this.description = description; }
     public Set<User> getMembers() { return members; }
     public void setMembers(Set<User> members) { this.members = members; }
+    public Set<User> getPendingMembers() { return pendingMembers; }
+    public void setPendingMembers(Set<User> pendingMembers) { this.pendingMembers = pendingMembers; }
+    public User getAdmin() { return admin; }
+    public void setAdmin(User admin) { this.admin = admin; }
+    public boolean isPrivate() { return isPrivate; }
+    public void setPrivate(boolean isPrivate) { this.isPrivate = isPrivate; }
 
     @Override
     public boolean equals(Object o) {

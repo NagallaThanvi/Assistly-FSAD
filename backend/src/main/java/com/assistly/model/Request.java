@@ -28,6 +28,10 @@ public class Request {
     @JoinColumn(name = "volunteer_id")
     private User volunteer;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "community_id")
+    private Community community;
+
     // Location coordinates
     private Double latitude;
     private Double longitude;
@@ -60,6 +64,8 @@ public class Request {
     public void setAuthor(User author) { this.author = author; }
     public User getVolunteer() { return volunteer; }
     public void setVolunteer(User volunteer) { this.volunteer = volunteer; }
+    public Community getCommunity() { return community; }
+    public void setCommunity(Community community) { this.community = community; }
     public Double getLatitude() { return latitude; }
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     public Double getLongitude() { return longitude; }

@@ -11,6 +11,7 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'communities' | 'profile' | 'admin_manage'
   const [activeAdminComm, setActiveAdminComm] = useState(null); // The community the admin is managing
   const [selectedCommunityId, setSelectedCommunityId] = useState(null); // For viewing requests contextually
+  const [pulse, setPulse] = useState({ events: [], meetings: [], rules: [] });
 
   const [isVolunteerMode, setIsVolunteerMode] = useState(false);
   const navigate = useNavigate();
@@ -86,8 +87,20 @@ const UserDashboard = () => {
   useEffect(() => {
     if (selectedCommunityId && user.token) {
       fetchRequests(user.token, selectedCommunityId);
+      fetchSyndicatePulse(user.token, selectedCommunityId);
     }
   }, [selectedCommunityId, user.token]);
+
+  const fetchSyndicatePulse = async (token, commId) => {
+    try {
+      const res = await axios.get(`${apiUrl}/content/pulse/${commId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPulse(res.data);
+    } catch (err) {
+      console.error("Failed to fetch syndicate pulse", err);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'profile' && user.token) {
@@ -218,6 +231,11 @@ const UserDashboard = () => {
     navigate('/login');
   };
 
+  const userJoinedCommunities = communities.filter(c => 
+    c.members?.some(m => sameId(m.id, user.id)) || 
+    sameId(c.admin?.id, user.id)
+  );
+
   const displayedRequests = requests.filter(req => {
     if (isVolunteerMode) return !sameId(req.author?.id, user.id);
     return sameId(req.author?.id, user.id);
@@ -290,12 +308,31 @@ const UserDashboard = () => {
                   <div className="d-flex gap-3 align-items-center w-50 justify-content-end">
                     <select className="form-select bg-dark text-light border-secondary" value={selectedCommunityId || ''} onChange={(e) => setSelectedCommunityId(Number(e.target.value))}>
                         <option value="" disabled>Select Workspace...</option>
-                          {communities.filter(c => c.members?.some(m => sameId(m.id, user.id)) || sameId(c.admin?.id, user.id)).map(c => (
+                          {userJoinedCommunities.map(c => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                     </select>
                   </div>
               </div>
+
+              {!selectedCommunityId && userJoinedCommunities.length === 0 && (
+                <div className="text-center p-5">
+                   <div className="mb-4">
+                      <i className="bi bi-geo-alt-fill text-gradient" style={{fontSize: '4rem'}}></i>
+                   </div>
+                   <h2 className="fw-bold mb-3">Welcome to your Operations Center, {user.name}</h2>
+                   <p className="text-muted lead mb-5 mx-auto" style={{maxWidth: '600px'}}>
+                      Your tactical dashboard is currently inactive because you haven't joined a Syndicate Network yet. 
+                      Connect with a community to begin broadcasting missions or volunteering for active assignments.
+                   </p>
+                   <button 
+                     onClick={() => setActiveTab('communities')} 
+                     className="neon-button px-5"
+                   >
+                     Discover Syndicate Networks
+                   </button>
+                </div>
+              )}
 
               {selectedCommunityId && (
                 <div className="row g-3 mb-4">
@@ -322,6 +359,55 @@ const UserDashboard = () => {
 
               {selectedCommunityId ? (
                 <>
+                  <div className="row g-4 mb-5">
+                    {/* Community Pulse Widget */}
+                    <div className="col-lg-8">
+                       <div className="p-4 rounded-4 bg-dark bg-opacity-50 border border-secondary h-100">
+                          <h5 className="text-info mb-4 d-flex align-items-center">
+                            <i className="bi bi-activity me-2"></i> Syndicate Pulse
+                          </h5>
+                          <div className="row g-3">
+                             <div className="col-md-6 border-end border-secondary border-opacity-25">
+                                <h6 className="small text-muted mb-3 text-uppercase tracking-wider">Gatherings</h6>
+                                {pulse.events.length > 0 ? pulse.events.map(ev => (
+                                  <div key={ev.id} className="mb-3 p-2 rounded hover-bg-light">
+                                    <div className="fw-bold small">{ev.title}</div>
+                                    <div className="text-muted tiny-text"><i className="bi bi-calendar-event me-1"></i> {new Date(ev.startTime).toLocaleDateString()}</div>
+                                  </div>
+                                )) : <div className="small text-muted fst-italic">No gatherings scheduled.</div>}
+                             </div>
+                             <div className="col-md-6">
+                                <h6 className="small text-muted mb-3 text-uppercase tracking-wider">Sync-ups</h6>
+                                {pulse.meetings.length > 0 ? pulse.meetings.map(mt => (
+                                  <div key={mt.id} className="mb-3 p-2 rounded hover-bg-light">
+                                    <div className="fw-bold small">{mt.title}</div>
+                                    <a href={mt.link} target="_blank" rel="noreferrer" className="text-info tiny-text text-decoration-none"><i className="bi bi-link-45deg me-1"></i> JOIN BROADCAST</a>
+                                  </div>
+                                )) : <div className="small text-muted fst-italic">No meetings scheduled.</div>}
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Governance Widget */}
+                    <div className="col-lg-4">
+                       <div className="p-4 rounded-4 bg-dark bg-opacity-50 border border-secondary h-100">
+                          <h5 className="text-warning mb-4 d-flex align-items-center">
+                            <i className="bi bi-shield-check me-2"></i> Governance
+                          </h5>
+                          <ul className="list-unstyled mb-0">
+                             {pulse.rules.length > 0 ? pulse.rules.map(rule => (
+                               <li key={rule.id} className="small mb-3 d-flex gap-2">
+                                  <i className="bi bi-caret-right-fill text-warning mt-1"></i>
+                                  <span>{rule.description}</span>
+                               </li>
+                             )) : <li className="small text-muted fst-italic">Rules pending synchronization.</li>}
+                          </ul>
+                       </div>
+                    </div>
+                  </div>
+
+                  <h5 className="text-muted mb-4 text-uppercase small tracking-widest fw-bold">Tactical Broadcasts</h5>
                   <div className="table-responsive mb-4" style={{maxHeight: '300px'}}>
                     <table className="table table-borderless text-light align-middle custom-glass-table">
                       <thead className="position-sticky top-0 bg-dark" style={{zIndex: 1}}>

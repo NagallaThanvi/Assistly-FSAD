@@ -42,6 +42,9 @@ public class AuthController {
     UserRepository userRepository;
 
     @Autowired
+    com.assistly.repository.CommunityRepository communityRepository;
+
+    @Autowired
     PasswordEncoder encoder;
 
     @Autowired
@@ -114,6 +117,12 @@ public class AuthController {
                 userRole);
 
         userRepository.save(user);
+
+        // Auto-join to Global Syndicate
+        communityRepository.findByName("Global Syndicate").ifPresent(comm -> {
+            comm.getMembers().add(user);
+            communityRepository.save(comm);
+        });
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }

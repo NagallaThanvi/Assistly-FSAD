@@ -118,12 +118,6 @@ public class AuthController {
 
         userRepository.save(user);
 
-        // Auto-join to Global Syndicate
-        communityRepository.findByName("Global Syndicate").ifPresent(comm -> {
-            comm.getMembers().add(user);
-            communityRepository.save(comm);
-        });
-
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 

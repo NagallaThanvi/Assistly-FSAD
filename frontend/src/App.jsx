@@ -57,7 +57,7 @@ function App() {
             {user ? (
                 <>
                   <span className="text-light small opacity-75 fst-italic me-2">Welcome, {user.name}</span>
-                  <Link className="nav-link" to={user.role === 'ROLE_ADMIN' || user.role === 'ADMIN' ? '/dashboard/admin' : '/dashboard/user'}>Dashboard</Link>
+                  <Link className="nav-link" to={user.role === 'ROLE_ADMIN' || user.role === 'ADMIN' ? '/dashboard/admin' : '/dashboard/user'} onClick={() => window.location.pathname.startsWith('/dashboard') && window.location.reload()}>Dashboard</Link>
                   <button onClick={handleLogout} className="btn nav-link text-warning fw-bold border-0 bg-transparent">Logout</button>
                 </>
             ) : (

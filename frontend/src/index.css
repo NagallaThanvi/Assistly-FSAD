@@ -143,10 +143,75 @@ a.nav-link:hover {
 }
 
 .form-control.bg-dark {
-  background-color: rgba(30, 41, 59, 0.9) !important;
+  background-color: rgba(15, 17, 26, 0.8) !important;
   color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
+
+.form-control:focus {
+  background-color: rgba(20, 22, 35, 0.9) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25) !important;
+  color: #fff !important;
+}
+
 .form-control::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
   opacity: 1;
+}
+
+/* Stat Cards */
+.stat-card {
+  background: rgba(30, 41, 59, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  transform: translateY(-3px);
+}
+
+/* Community Cards */
+.community-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.community-card:hover {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Achievement Badges */
+.achievement-badge {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(234, 179, 8, 0.1) !important;
+}
+
+.achievement-badge:hover {
+  transform: scale(1.05);
+  border-color: rgba(234, 179, 8, 0.5) !important;
+  background: rgba(234, 179, 8, 0.05) !important;
+}
+
+.tiny-badge {
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }

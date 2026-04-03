@@ -1,19 +1,25 @@
 package com.assistly.controller;
 
-import com.assistly.model.Request;
-import com.assistly.model.RequestStatus;
-import com.assistly.model.User;
-import com.assistly.repository.RequestRepository;
-import com.assistly.repository.UserRepository;
-import com.assistly.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
+import com.assistly.model.Request;
+import com.assistly.model.User;
+import com.assistly.repository.UserRepository;
+import com.assistly.security.services.UserDetailsImpl;
+import com.assistly.services.RequestService;
+import com.assistly.payload.request.RequestDto;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -21,152 +27,101 @@ import java.util.Optional;
 public class RequestController {
 
     @Autowired
-    RequestRepository requestRepository;
+    RequestService requestService;
 
     @Autowired
     UserRepository userRepository;
 
-    @Autowired
-    com.assistly.repository.CommunityRepository communityRepository;
-
     @GetMapping
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllRequests() {
-        return ResponseEntity.ok(requestRepository.findAll());
+        return ResponseEntity.ok(requestService.getAllRequests());
     }
 
     @GetMapping("/community/{communityId}")
     public ResponseEntity<?> getCommunityRequests(@PathVariable Long communityId) {
-        User currentUser = getCurrentUser();
-        Optional<com.assistly.model.Community> commData = communityRepository.findById(communityId);
-        
-        if (currentUser != null && commData.isPresent()) {
-            com.assistly.model.Community comm = commData.get();
-            if (comm.getMembers().contains(currentUser) || (comm.getAdmin() != null && comm.getAdmin().getId().equals(currentUser.getId()))) {
-                return ResponseEntity.ok(requestRepository.findByCommunity(comm));
-            }
+        try {
+            return ResponseEntity.ok(requestService.getRequestsByCommunity(communityId));
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
-        return ResponseEntity.status(403).build();
     }
 
     @PostMapping("/community/{communityId}")
-    public ResponseEntity<?> createRequest(@PathVariable Long communityId, @RequestBody Request requestBody) {
+    public ResponseEntity<?> createRequest(@PathVariable Long communityId, @RequestBody RequestDto requestDto) {
         User currentUser = getCurrentUser();
-        Optional<com.assistly.model.Community> commData = communityRepository.findById(communityId);
-
-        if (currentUser != null && commData.isPresent()) {
-            com.assistly.model.Community comm = commData.get();
-            if (comm.getMembers().contains(currentUser) || (comm.getAdmin() != null && comm.getAdmin().getId().equals(currentUser.getId()))) {
-                requestBody.setAuthor(currentUser);
-                requestBody.setStatus(RequestStatus.OPEN);
-                requestBody.setCommunity(comm);
-                Request savedRequest = requestRepository.save(requestBody);
-                return ResponseEntity.ok(savedRequest);
-            }
+        try {
+            Request savedRequest = requestService.createRequest(communityId, requestDto, currentUser);
+            return ResponseEntity.ok(savedRequest);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
-        return ResponseEntity.status(403).build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateRequest(@PathVariable Long id, @RequestBody Request requestDetails) {
-        Optional<Request> reqData = requestRepository.findById(id);
-
-        if (reqData.isPresent()) {
-            Request _request = reqData.get();
-            _request.setTitle(requestDetails.getTitle());
-            _request.setDescription(requestDetails.getDescription());
-            _request.setLatitude(requestDetails.getLatitude());
-            _request.setLongitude(requestDetails.getLongitude());
-            return ResponseEntity.ok(requestRepository.save(_request));
-        } else {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> updateRequest(@PathVariable Long id, @RequestBody RequestDto requestDto) {
+        User currentUser = getCurrentUser();
+        try {
+            Request updated = requestService.updateRequest(id, requestDto, currentUser);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRequest(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
         try {
-            requestRepository.deleteById(id);
+            requestService.deleteRequest(id, currentUser);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
     @PostMapping("/{id}/accept")
     public ResponseEntity<?> acceptRequest(@PathVariable Long id) {
         User currentUser = getCurrentUser();
-        Optional<Request> reqData = requestRepository.findById(id);
-
-        if (reqData.isPresent() && currentUser != null) {
-            Request _request = reqData.get();
-            if (_request.getAuthor().getId().equals(currentUser.getId())) {
-                return ResponseEntity.badRequest().body("Cannot accept own request");
-            }
-            _request.setVolunteer(currentUser);
-            _request.setStatus(RequestStatus.IN_PROGRESS);
-            return ResponseEntity.ok(requestRepository.save(_request));
+        try {
+            Request accepted = requestService.acceptRequest(id, currentUser);
+            return ResponseEntity.ok(accepted);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/{id}/submit")
     public ResponseEntity<?> submitForVerification(@PathVariable Long id) {
         User currentUser = getCurrentUser();
-        Optional<Request> reqData = requestRepository.findById(id);
-
-        if (reqData.isPresent() && currentUser != null) {
-            Request _request = reqData.get();
-            boolean isAssignedVolunteer = _request.getVolunteer() != null && _request.getVolunteer().getId().equals(currentUser.getId());
-            
-            if (isAssignedVolunteer && _request.getStatus() == RequestStatus.IN_PROGRESS) {
-                _request.setStatus(RequestStatus.PENDING_VERIFICATION);
-                return ResponseEntity.ok(requestRepository.save(_request));
-            } else {
-                return ResponseEntity.status(403).body("Only the active volunteer can submit this task for review.");
-            }
+        try {
+            Request submitted = requestService.submitForVerification(id, currentUser);
+            return ResponseEntity.ok(submitted);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/{id}/complete")
     public ResponseEntity<?> completeRequest(@PathVariable Long id) {
         User currentUser = getCurrentUser();
-        Optional<Request> reqData = requestRepository.findById(id);
-
-        if (reqData.isPresent() && currentUser != null) {
-            Request _request = reqData.get();
-            boolean isAuthor = _request.getAuthor().getId().equals(currentUser.getId());
-            boolean isAdmin = "ADMIN".equals(currentUser.getRole().name());
-            
-            if ((isAuthor || isAdmin) && _request.getStatus() == RequestStatus.PENDING_VERIFICATION) {
-                _request.setStatus(RequestStatus.COMPLETED);
-                return ResponseEntity.ok(requestRepository.save(_request));
-            } else {
-                return ResponseEntity.status(403).body("Only the resident can officially verify and complete this task.");
-            }
+        try {
+            Request completed = requestService.completeRequest(id, currentUser);
+            return ResponseEntity.ok(completed);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> rejectSubmission(@PathVariable Long id) {
         User currentUser = getCurrentUser();
-        Optional<Request> reqData = requestRepository.findById(id);
-
-        if (reqData.isPresent() && currentUser != null) {
-            Request _request = reqData.get();
-            boolean isAuthor = _request.getAuthor().getId().equals(currentUser.getId());
-            boolean isAdmin = "ADMIN".equals(currentUser.getRole().name());
-            
-            if ((isAuthor || isAdmin) && _request.getStatus() == RequestStatus.PENDING_VERIFICATION) {
-                _request.setStatus(RequestStatus.IN_PROGRESS);
-                return ResponseEntity.ok(requestRepository.save(_request));
-            } else {
-                return ResponseEntity.status(403).body("Only the resident can reject this verification.");
-            }
+        try {
+            Request rejected = requestService.rejectSubmission(id, currentUser);
+            return ResponseEntity.ok(rejected);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     private User getCurrentUser() {

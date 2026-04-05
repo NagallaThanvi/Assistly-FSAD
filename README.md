@@ -162,6 +162,40 @@ SPRING_DATASOURCE_PASSWORD=yourpassword
 
 JWT_SECRET=your_secret_key
 ________________________________________
+Integration Setup (SMTP + Google + Leaflet + Chatbot)
+
+1. SMTP (Spring Mail)
+- Backend uses Spring Mail for signup and password-reset confirmation emails.
+- Set these variables before running backend:
+  - SPRING_MAIL_HOST=smtp.gmail.com
+  - SPRING_MAIL_PORT=587
+  - SPRING_MAIL_USERNAME=your_email@gmail.com
+  - SPRING_MAIL_PASSWORD=your_app_password
+  - SPRING_MAIL_SMTP_AUTH=true
+  - SPRING_MAIL_SMTP_STARTTLS=true
+
+2. Google Authentication
+- Backend expects GOOGLE_CLIENT_ID for ID token verification.
+- Frontend expects VITE_GOOGLE_CLIENT_ID for Google sign-in button.
+- Ensure both client IDs match your OAuth Web Client.
+
+3. Location Tracking (Leaflet)
+- Request map supports click-to-select and "Use My Current Location" geolocation.
+- Browser location permission must be allowed.
+
+4. Chatbot Integration
+- Frontend has a floating chat widget.
+- Backend endpoint: POST /api/chatbot/message
+- Optional AI webhook integration via:
+  - CHATBOT_WEBHOOK_URL=https://your-chat-service-endpoint
+  - CHATBOT_WEBHOOK_AUTH_TOKEN=optional_bearer_token
+- If webhook is not configured, local fallback responses are used.
+
+5. Run Full Stack
+- Backend: cd backend && mvn spring-boot:run
+- Frontend: cd frontend && npm install && npm run dev
+- Open: http://localhost:5173
+________________________________________
  Key API Endpoints
 Auth
 •	POST /api/auth/signup 

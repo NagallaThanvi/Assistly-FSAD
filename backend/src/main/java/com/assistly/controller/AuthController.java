@@ -8,6 +8,7 @@ import com.assistly.payload.request.SignupRequest;
 import com.assistly.payload.response.JwtResponse;
 import com.assistly.payload.response.MessageResponse;
 import com.assistly.repository.UserRepository;
+import com.assistly.services.EmailService;
 import com.assistly.security.jwt.JwtUtils;
 import com.assistly.security.services.UserDetailsImpl;
 import com.assistly.model.AuthProvider;
@@ -49,6 +50,9 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    EmailService emailService;
 
     @Value("${google.client.id}")
     private String googleClientId;
@@ -117,6 +121,7 @@ public class AuthController {
                 userRole);
 
         userRepository.save(user);
+        emailService.sendSignupWelcome(user.getEmail(), user.getName());
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
@@ -136,6 +141,7 @@ public class AuthController {
 
         user.setPassword(encoder.encode(request.getNewPassword()));
         userRepository.save(user);
+        emailService.sendPasswordResetConfirmation(user.getEmail());
         return ResponseEntity.ok(new MessageResponse("Password reset successful. Please login."));
     }
 

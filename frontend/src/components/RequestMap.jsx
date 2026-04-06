@@ -36,8 +36,40 @@ const LocationSelector = ({ onLocationSelect }) => {
 const RequestMap = ({ requests, currentUserId, onAccept, onLocationSelect, selectedLocation }) => {
   const defaultCenter = selectedLocation ? [selectedLocation.lat, selectedLocation.lng] : [40.7128, -74.0060];
 
+  const handleUseCurrentLocation = () => {
+    if (!onLocationSelect) return;
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported in this browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        onLocationSelect(position.coords.latitude, position.coords.longitude);
+      },
+      () => {
+        alert('Unable to fetch your current location. Please allow location access.');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+      }
+    );
+  };
+
   return (
     <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+      {onLocationSelect && (
+        <div className="d-flex justify-content-end mb-2">
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-info"
+            onClick={handleUseCurrentLocation}
+          >
+            Use My Current Location
+          </button>
+        </div>
+      )}
       <MapContainer center={defaultCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
         <MapUpdater center={defaultCenter} />
         <TileLayer

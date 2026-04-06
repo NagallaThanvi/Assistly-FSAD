@@ -7,6 +7,7 @@ import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import ForgotPassword from './components/ForgotPassword';
+import ChatbotWidget from './components/ChatbotWidget';
 
 const Home = () => (
   <div className="container mt-5 pt-5 text-center">
@@ -82,6 +83,7 @@ function App() {
         <Route path="/dashboard/user" element={<UserDashboard />} />
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
       </Routes>
+      <ChatbotWidget />
     </Router>
   );
 }
